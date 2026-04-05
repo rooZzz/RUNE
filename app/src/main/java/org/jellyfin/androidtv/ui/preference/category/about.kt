@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jellyfin.androidtv.BuildConfig
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.ui.preference.dsl.OptionsScreen
 import org.jellyfin.androidtv.ui.preference.dsl.link
@@ -15,15 +16,13 @@ import org.jellyfin.androidtv.util.AppUpdater
 import org.jellyfin.androidtv.util.UpdateResult
 import timber.log.Timber
 
-private const val CURRENT_VERSION = "0.0.9"
-
 fun OptionsScreen.aboutCategory() = category {
     setTitle(R.string.pref_about_title)
 
     link {
-        title = "Dune app version"
-        content = CURRENT_VERSION
-        icon = R.drawable.dune_icon
+        title = "Rune app version"
+        content = BuildConfig.VERSION_NAME
+        icon = R.drawable.rune_icon
     }
 
     action {
@@ -57,7 +56,7 @@ private fun checkForUpdates(context: Context) {
     CoroutineScope(Dispatchers.Main).launch {
         val result = withContext(Dispatchers.IO) {
             try {
-                appUpdater.checkForUpdates(CURRENT_VERSION)
+                appUpdater.checkForUpdates(BuildConfig.VERSION_NAME)
             } catch (e: Exception) {
                 UpdateResult.Error(e.message ?: "Unknown error")
             }

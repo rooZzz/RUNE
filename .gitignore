@@ -127,7 +127,6 @@ fabric.properties
 *.tlz
 *.tlzma
 *.zipx
-app/enhanced/release/baselineProfiles/0/Dune.androidtv-0.0.8-enhanced-release.dm
-app/enhanced/release/output-metadata.json
-app/enhanced/release/baselineProfiles/1/Dune.androidtv-0.0.8-enhanced-release.dm
+app/build/outputs/apk/release/baselineProfiles/**/Rune.androidtv-*-release.dm
+app/build/outputs/apk/release/output-metadata.json
 .vscode/settings.json
