@@ -2,9 +2,6 @@ package org.jellyfin.androidtv.ui.playback;
 
 import static org.koin.java.KoinJavaComponent.inject;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
@@ -523,102 +520,16 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         }
 
         if (forcedAudioLanguage != null && !forcedAudioLanguage.trim().isEmpty()) {
-            String normalizedForcedLang = forcedAudioLanguage.trim().toLowerCase();
-            Timber.d("Looking for audio track matching language: %s", normalizedForcedLang);
-            boolean foundMatch = false;
-
-            // Log all available audio tracks for debugging
-            Timber.d("Available audio tracks:");
-            for (MediaStream stream : currentMediaSource.getMediaStreams()) {
-                if (stream.getType() == MediaStreamType.AUDIO) {
-                    Timber.d("Track %d: lang=%s, codec=%s, title=%s, channels=%d, sampleRate=%d, path=%s",
-                            stream.getIndex(),
-                            stream.getLanguage(),
-                            stream.getCodec(),
-                            stream.getDisplayTitle(),
-                            stream.getChannels() != null ? stream.getChannels() : -1,
-                            stream.getSampleRate() != null ? stream.getSampleRate() : -1,
-                            stream.getPath()
-                    );
-                }
-            }
-
-            // Map of common language codes (2-letter to 3-letter and vice versa)
-            Map<String, String> languageCodeMap = new HashMap<>();
-            // Spanish
-            languageCodeMap.put("es", "spa");
-            languageCodeMap.put("spa", "es");
-            // English
-            languageCodeMap.put("en", "eng");
-            languageCodeMap.put("eng", "en");
-            // German
-            languageCodeMap.put("de", "ger");
-            languageCodeMap.put("ger", "de");
-            // Add more language codes as needed
-
-            // Try different matching strategies
-            for (MediaStream stream : currentMediaSource.getMediaStreams()) {
-                if (stream.getType() != MediaStreamType.AUDIO || stream.getLanguage() == null) {
-                    continue;
-                }
-                
-                if (userPreferences.getValue().get(UserPreferences.Companion.getSkipCommentaryTracks())) {
-                    String displayTitle = stream.getDisplayTitle();
-                    if (displayTitle != null && displayTitle.toLowerCase().contains("commentary")) {
-                        Timber.d("Skipping commentary track: %s (index %d)", displayTitle, stream.getIndex());
-                        continue;
-                    }
-                }
-
-                String streamLang = stream.getLanguage().toLowerCase();
-
-                // 1. Try exact match (case insensitive)
-                if (streamLang.equals(normalizedForcedLang)) {
-                    Timber.d("Found exact language match: %s -> %s (index %d)",
-                            normalizedForcedLang, streamLang, stream.getIndex());
-                    internalOptions.setAudioStreamIndex(stream.getIndex());
-                    return internalOptions;
-                }
-
-                // 2. Try mapped language codes
-                if (languageCodeMap.containsKey(normalizedForcedLang) &&
-                        languageCodeMap.get(normalizedForcedLang).equals(streamLang)) {
-                    Timber.d("Found mapped language match: %s -> %s (index %d)",
-                            normalizedForcedLang, streamLang, stream.getIndex());
-                    internalOptions.setAudioStreamIndex(stream.getIndex());
-                    foundMatch = true;
-                    // Don't break, keep looking for a better match
-                }
-
-                // 3. Try matching ISO 639-1 (2-letter) to ISO 639-2/T (3-letter) codes and vice versa
-                if ((normalizedForcedLang.length() == 2 && streamLang.startsWith(normalizedForcedLang)) ||
-                        (normalizedForcedLang.length() == 3 && streamLang.length() >= 2 &&
-                                normalizedForcedLang.startsWith(streamLang.substring(0, 2)))) {
-                    Timber.d("Found language code match: %s -> %s (index %d)",
-                            normalizedForcedLang, streamLang, stream.getIndex());
-                    internalOptions.setAudioStreamIndex(stream.getIndex());
-                    foundMatch = true;
-                    // Don't break, keep looking for a better match
-                }
-
-                // 4. Try matching display title as a last resort
-                if (!foundMatch && stream.getDisplayTitle() != null) {
-                    String displayTitle = stream.getDisplayTitle().toLowerCase();
-                    if (displayTitle.contains(normalizedForcedLang) ||
-                            (languageCodeMap.containsKey(normalizedForcedLang) &&
-                                    displayTitle.contains(languageCodeMap.get(normalizedForcedLang)))) {
-                        Timber.d("Found match in display title: %s in %s (index %d)",
-                                normalizedForcedLang, displayTitle, stream.getIndex());
-                        internalOptions.setAudioStreamIndex(stream.getIndex());
-                        foundMatch = true;
-                        // Don't break, keep looking for a better match
-                    }
-                }
-            }
-
-            // Log available audio tracks if no match found
-            if (!foundMatch) {
-                Timber.w("No matching audio track found for language: %s. Available audio tracks:", forcedAudioLanguage);
+            Timber.d("Looking for audio track matching language: %s", forcedAudioLanguage.trim());
+            Integer preferredAudio = TrackSelection.selectPreferredAudioStreamIndex(
+                    currentMediaSource.getMediaStreams(),
+                    forcedAudioLanguage,
+                    userPreferences.getValue().get(UserPreferences.Companion.getSkipCommentaryTracks())
+            );
+            if (preferredAudio != null) {
+                internalOptions.setAudioStreamIndex(preferredAudio);
+            } else {
+                Timber.w("No matching audio track found for language: %s", forcedAudioLanguage);
                 for (MediaStream stream : currentMediaSource.getMediaStreams()) {
                     if (stream.getType() == MediaStreamType.AUDIO) {
                         Timber.w("- Index: %d, Language: %s, DisplayTitle: %s, Codec: %s, Channels: %d, SampleRate: %d",
@@ -715,7 +626,6 @@ public class PlaybackController implements PlaybackControllerNotifiable {
 
         if (mCurrentIndex != mLastIndex) {
             clearPlaybackSessionOptions();
-            mCurrentOptions.setAudioStreamIndex(null);
             mLastIndex = mCurrentIndex;
         }
 
@@ -745,6 +655,7 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         Integer preferredSubtitleIndex = findPreferredSubtitleTrack(mediaSource);
         mCurrentOptions.setSubtitleStreamIndex(preferredSubtitleIndex);
         setDefaultAudioIndex(response);
+        applyPreferredAudioTrack(mediaSource);
 
         // Save the selected audio language for the next episode
         if (mCurrentOptions.getAudioStreamIndex() != null) {
@@ -858,51 +769,46 @@ public class PlaybackController implements PlaybackControllerNotifiable {
         Timber.d("default audio index set to %s", mDefaultAudioIndex);
     }
 
-    private Integer findPreferredSubtitleTrack(MediaSourceInfo mediaSource) {
+    private void applyPreferredAudioTrack(MediaSourceInfo mediaSource) {
         if (mediaSource == null || mediaSource.getMediaStreams() == null) {
+            if (mDefaultAudioIndex != -1) {
+                mCurrentOptions.setAudioStreamIndex(mDefaultAudioIndex);
+            }
+            return;
+        }
+        String forcedAudio = videoQueueManager.getValue().getLastPlayedAudioLanguageIsoCode();
+        if (forcedAudio == null || forcedAudio.isEmpty()) {
+            AudioLanguage defaultAudioLang = userPreferences.getValue().get(UserPreferences.Companion.getDefaultAudioLanguage());
+            if (defaultAudioLang != null && defaultAudioLang != AudioLanguage.NONE) {
+                forcedAudio = defaultAudioLang.getCode();
+            }
+        }
+        Integer preferred = null;
+        if (forcedAudio != null && !forcedAudio.isEmpty()) {
+            preferred = TrackSelection.selectPreferredAudioStreamIndex(
+                    mediaSource.getMediaStreams(),
+                    forcedAudio,
+                    userPreferences.getValue().get(UserPreferences.Companion.getSkipCommentaryTracks())
+            );
+        }
+        if (preferred != null) {
+            mCurrentOptions.setAudioStreamIndex(preferred);
+            mDefaultAudioIndex = preferred;
+        } else if (mDefaultAudioIndex != -1) {
+            mCurrentOptions.setAudioStreamIndex(mDefaultAudioIndex);
+        }
+    }
+
+    private Integer findPreferredSubtitleTrack(MediaSourceInfo mediaSource) {
+        if (mediaSource == null) {
             return null;
         }
-
-        // Get user's preferred subtitle language
         SubtitleLanguage preferredLanguage = userPreferences.getValue().get(UserPreferences.Companion.getDefaultSubtitleLanguage());
-        if (preferredLanguage == null || preferredLanguage == SubtitleLanguage.NONE) {
-            return null;
-        }
-
-        String preferredLangCode = preferredLanguage.getCode();
-        if (preferredLangCode == null || preferredLangCode.isEmpty()) {
-            return null;
-        }
-
-        Timber.d("Looking for subtitle track matching language: %s", preferredLangCode);
-
-        // First pass: look for exact language match
-        for (MediaStream stream : mediaSource.getMediaStreams()) {
-            if (stream.getType() == MediaStreamType.SUBTITLE &&
-                    stream.getLanguage() != null &&
-                    stream.getLanguage().equalsIgnoreCase(preferredLangCode)) {
-                Timber.d("Found exact language match for %s at index %d",
-                        preferredLangCode, stream.getIndex());
-                return stream.getIndex();
-            }
-        }
-
-        // Second pass: look for partial language match (e.g., "en" matches "eng")
-        if (preferredLangCode.length() >= 2) {
-            String langPrefix = preferredLangCode.substring(0, 2).toLowerCase();
-            for (MediaStream stream : mediaSource.getMediaStreams()) {
-                if (stream.getType() == MediaStreamType.SUBTITLE &&
-                        stream.getLanguage() != null &&
-                        stream.getLanguage().toLowerCase().startsWith(langPrefix)) {
-                    Timber.d("Found partial language match for %s at index %d",
-                            preferredLangCode, stream.getIndex());
-                    return stream.getIndex();
-                }
-            }
-        }
-
-        // If no match found, return the default subtitle track if available
-        return mediaSource.getDefaultSubtitleStreamIndex();
+        return TrackSelection.selectPreferredSubtitleStreamIndex(
+                mediaSource.getMediaStreams(),
+                preferredLanguage,
+                mediaSource.getDefaultSubtitleStreamIndex()
+        );
     }
 
     public void switchAudioStream(int index) {
