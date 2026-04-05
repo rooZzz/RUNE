@@ -43,6 +43,7 @@
 <string name="lbl_suggested_tv_shows">Suggested TV Shows</string>
     <string name="lbl_search">Search</string>
     <string name="lbl_search_hint">Search for movies, shows, and more...</string>
+    <string name="lbl_recent_searches">Recent searches</string>
     <string name="voice_search_not_available">Voice search not available</string>
     <string name="error_occurred">An error occurred. Please try again.</string>
     <string name="no_results_found">No results found</string>

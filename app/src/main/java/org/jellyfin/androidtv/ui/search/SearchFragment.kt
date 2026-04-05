@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.leanback.app.RowsSupportFragment
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.jellyfin.androidtv.databinding.FragmentSearchBinding
@@ -23,7 +24,6 @@ import org.jellyfin.androidtv.constant.ImageType
 import org.jellyfin.androidtv.util.ImageHelper
 import org.jellyfin.androidtv.util.ImagePreloader
 import org.jellyfin.androidtv.data.service.BackgroundService
-import org.jellyfin.androidtv.util.Utils
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -31,12 +31,9 @@ import timber.log.Timber
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Build
 import android.speech.RecognizerIntent
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 
 class SearchFragment : Fragment() {
 	companion object {
@@ -62,7 +59,7 @@ class SearchFragment : Fragment() {
 
 		binding.searchBar.apply {
 			onTextChanged { viewModel.searchDebounced(it) }
-			onSubmit { viewModel.searchImmediately(it) }
+			onSubmit { viewModel.submitSearch(it) }
 		}
 
 		val rowsSupportFragment = RowsSupportFragment().apply {
@@ -103,7 +100,7 @@ class SearchFragment : Fragment() {
 				val matches = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
 				if (!matches.isNullOrEmpty()) {
 					binding.searchBar.setText(matches[0])
-					viewModel.searchImmediately(matches[0])
+					viewModel.submitSearch(matches[0])
 				}
 			} else {
 				Toast.makeText(requireContext(), "No voice input recognized", Toast.LENGTH_SHORT).show()
@@ -126,9 +123,17 @@ class SearchFragment : Fragment() {
 		binding.voiceSearchIcon.setOnClickListener { launchVoiceSearch() }
 		voiceIconFrame.setOnClickListener { launchVoiceSearch() }
 
-		viewModel.searchResultsFlow
-			.onEach { results: Collection<SearchResultGroup> ->
-				searchFragmentDelegate.showResults(results)
+		searchFragmentDelegate.onRecentQuerySelected = { query ->
+			binding.searchBar.setText(query)
+			viewModel.submitSearch(query)
+			binding.resultsFrame.requestFocus()
+		}
+
+		viewModel.searchResultsFlow.combine(viewModel.recentSearchesFlow) { results, recentQueries ->
+			results to recentQueries
+		}
+			.onEach { (results, recentQueries) ->
+				searchFragmentDelegate.showResults(results, recentQueries)
 				// Preload images for all visible and next 5 items
                 // Import required classes
                 // import org.jellyfin.androidtv.util.ImageHelper

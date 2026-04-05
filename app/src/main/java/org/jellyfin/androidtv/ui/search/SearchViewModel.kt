@@ -15,7 +15,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class SearchViewModel(
-	private val searchRepository: SearchRepository
+	private val searchRepository: SearchRepository,
+	private val recentSearchesRepository: RecentSearchesRepository,
 ) : ViewModel() {
 	companion object {
 		private val debounceDuration = 600.milliseconds
@@ -44,8 +45,19 @@ class SearchViewModel(
 
 	private val _searchResultsFlow = MutableStateFlow<Collection<SearchResultGroup>>(emptyList())
 	val searchResultsFlow = _searchResultsFlow.asStateFlow()
+	private val _recentSearchesFlow = MutableStateFlow<List<String>>(emptyList())
+	val recentSearchesFlow = _recentSearchesFlow.asStateFlow()
+
+	init {
+		_recentSearchesFlow.value = recentSearchesRepository.getRecentSearches()
+	}
 
 	fun searchImmediately(query: String) = searchDebounced(query, 0.milliseconds)
+
+	fun submitSearch(query: String): Boolean {
+		recentSearchesRepository.addRecentSearch(query)
+		return searchImmediately(query)
+	}
 
 	fun searchDebounced(query: String, debounce: Duration = debounceDuration): Boolean {
 		if (query == previousQuery) return false
@@ -55,8 +67,11 @@ class SearchViewModel(
 
 		if (query.isBlank()) {
 			_searchResultsFlow.value = emptyList()
+			_recentSearchesFlow.value = recentSearchesRepository.getRecentSearches()
 			return true
 		}
+
+		_recentSearchesFlow.value = emptyList()
 
 		searchJob = viewModelScope.launch {
 			delay(debounce)

@@ -377,6 +377,8 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		var preloadImages = booleanPreference("preload_images", true)
 
+		var recentSearchesByUser = stringPreference("recent_searches_by_user", "")
+
 		/**
 		 * Disk cache size in MB for images
 		 * Default: 250mb
