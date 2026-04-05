@@ -15,6 +15,21 @@
 				"focus": true,
 				"clear": true
 			}
+		},
+		{
+			"label": "RUNE: Rebuild and restart app on open emulator",
+			"type": "shell",
+			"command": "${workspaceFolder}/scripts/rebuild-restart-on-emulator.sh",
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated",
+				"focus": true,
+				"clear": true
+			}
 		}
 	]
 }

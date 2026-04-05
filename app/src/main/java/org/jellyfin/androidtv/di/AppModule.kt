@@ -14,6 +14,7 @@ import coil3.util.Logger
 import okio.Path.Companion.toOkioPath
 import org.jellyfin.androidtv.BuildConfig
 import org.jellyfin.androidtv.auth.repository.ServerRepository
+import org.jellyfin.androidtv.auth.repository.SessionRepository
 import org.jellyfin.androidtv.auth.repository.UserRepository
 import org.jellyfin.androidtv.auth.repository.UserRepositoryImpl
 import org.jellyfin.androidtv.data.eventhandling.SocketHandler
@@ -40,9 +41,13 @@ import org.jellyfin.androidtv.ui.playback.nextup.NextUpViewModel
 import org.jellyfin.androidtv.ui.playback.segment.MediaSegmentRepository
 import org.jellyfin.androidtv.ui.playback.segment.MediaSegmentRepositoryImpl
 import org.jellyfin.androidtv.ui.search.SearchFragmentDelegate
+import org.jellyfin.androidtv.ui.search.RecentSearchesRepository
+import org.jellyfin.androidtv.ui.search.RecentSearchesRepositoryImpl
+import org.jellyfin.androidtv.ui.search.RecentSearchesStorage
 import org.jellyfin.androidtv.ui.search.SearchRepository
 import org.jellyfin.androidtv.ui.search.SearchRepositoryImpl
 import org.jellyfin.androidtv.ui.search.SearchViewModel
+import org.jellyfin.androidtv.ui.search.UserPreferenceRecentSearchesStorage
 import org.jellyfin.androidtv.ui.startup.ServerAddViewModel
 import org.jellyfin.androidtv.ui.startup.StartupViewModel
 import org.jellyfin.androidtv.ui.startup.UserLoginViewModel
@@ -166,6 +171,15 @@ val appModule = module {
 	single<CustomMessageRepository> { CustomMessageRepositoryImpl() }
 	single<NavigationRepository> { NavigationRepositoryImpl(Destinations.home) }
 	single<SearchRepository> { SearchRepositoryImpl(get()) }
+	single<RecentSearchesStorage> { UserPreferenceRecentSearchesStorage(get()) }
+	single<RecentSearchesRepository> {
+		RecentSearchesRepositoryImpl(
+			storage = get(),
+			currentUserIdProvider = {
+				get<SessionRepository>().currentSession.value?.userId?.toString()
+			}
+		)
+	}
 	single<MediaSegmentRepository> { MediaSegmentRepositoryImpl(get(), get()) }
 	single { org.jellyfin.androidtv.ui.itemdetail.ThemeSongs(androidContext()) }
 
@@ -175,7 +189,7 @@ val appModule = module {
 	viewModel { NextUpViewModel(get(), get(), get()) }
 	viewModel { PictureViewerViewModel(get()) }
 	viewModel { ScreensaverViewModel(get()) }
-	viewModel { SearchViewModel(get()) }
+	viewModel { SearchViewModel(get(), get()) }
 	viewModel { DreamViewModel(get(), get(), get(), get(), get()) }
 	viewModel { CarouselViewModel(get(), get(), get()) }
 
@@ -196,5 +210,5 @@ val appModule = module {
 	single { ReportingHelper(get(), get()) }
 	single<PlaybackHelper> { SdkPlaybackHelper(get(), get(), get(), get()) }
 
-	factory { (context: Context) -> SearchFragmentDelegate(context, get(), get()) }
+	factory { (context: Context) -> SearchFragmentDelegate(context, get()) }
 }
