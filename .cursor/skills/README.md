@@ -12,6 +12,7 @@ All skills in this directory are explicit-only and must be invoked manually.
 
 ## GitHub Integration Requirement
 Issue and pull-request workflows in this directory are defined for `rooZzz/RUNE` and must use the existing `user-github` MCP integration for GitHub operations.
+Do not use `gh` CLI for GitHub write actions in these workflows.
 
 ## Inputs and Confirmation Points
 

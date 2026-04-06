@@ -27,7 +27,7 @@ Create a pull request targeting `main` for repository `rooZzz/RUNE`.
    - linked issues
 5. Ask for explicit confirmation to publish.
 6. Push branch if needed.
-7. Create PR through GitHub tooling and return PR URL.
+7. Create PR through `user-github` MCP tools and return PR URL.
 
 ## PR Body Shape
 1. Summary
@@ -37,4 +37,6 @@ Create a pull request targeting `main` for repository `rooZzz/RUNE`.
 ## Hard Rules
 - Base branch must be `main`.
 - Never create PR from `main`.
+- Use `user-github` MCP integration for all GitHub operations in this workflow.
+- Do not use `gh` CLI for PR creation in this workflow.
 - If branch or remote state is unclear, stop and ask.
