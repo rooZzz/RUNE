@@ -35,6 +35,11 @@ Create multiple issues in `rooZzz/RUNE` using the existing `user-github` MCP int
 - Default to creating at most 5 issues per run unless the user confirms a higher number.
 - Keep each issue scoped to one shippable outcome.
 
+## Confirmation Prompt Format
+- Format dry-run and approval prompts as plain multiline text.
+- Use real line breaks and bullets, not literal `\n`.
+- End with a single explicit question: `Proceed with creating the approved issues?`.
+
 ## Hard Rules
 - Use `user-github` MCP integration for all GitHub operations in this workflow.
 - Do not create any issue without duplicate checks and explicit confirmation.

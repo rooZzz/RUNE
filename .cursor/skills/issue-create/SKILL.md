@@ -39,6 +39,11 @@ Use this section order unless the user specifies otherwise:
 4. Additional context
 5. Acceptance criteria
 
+## Confirmation Prompt Format
+- Format dry-run and approval prompts as plain multiline text.
+- Use real line breaks and bullets, not literal `\n`.
+- End with a single explicit question: `Proceed with issue creation?`.
+
 ## Hard Rules
 - Use `user-github` MCP integration for all GitHub operations in this workflow.
 - Do not create an issue before duplicate check and explicit confirmation.

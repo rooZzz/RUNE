@@ -35,6 +35,11 @@ Prepare a branch, create one commit, and push to remote for the current local ch
 - concise subject line
 - no trailing decoration unless user requests
 
+## Confirmation Prompt Format
+- Format dry-run and approval prompts as plain multiline text.
+- Use real line breaks and bullets, not literal `\n`.
+- End with a single explicit question: `Proceed with staging, commit, and push?`.
+
 ## Hard Rules
 - Never commit on `main`.
 - Never include likely secret files.

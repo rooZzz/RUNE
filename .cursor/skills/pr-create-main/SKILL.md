@@ -34,6 +34,11 @@ Create a pull request targeting `main` for repository `rooZzz/RUNE`.
 2. Test plan
 3. Linked issues
 
+## Confirmation Prompt Format
+- Format dry-run and approval prompts as plain multiline text.
+- Use real line breaks and bullets, not literal `\n`.
+- End with a single explicit question: `Proceed to push branch and create the PR?`.
+
 ## Hard Rules
 - Base branch must be `main`.
 - Never create PR from `main`.
