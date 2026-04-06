@@ -1364,8 +1364,7 @@ public class CustomPlaybackOverlayFragment extends Fragment implements LiveTvGui
         BaseItemDto currentEpisode = playbackControllerContainer.getValue().getPlaybackController().getCurrentlyPlayingItem();
         if (currentEpisode == null || currentEpisode.getSeasonId() == null) return;
         GetItemsRequest episodesRequest = org.jellyfin.androidtv.ui.browsing.BrowsingUtils.createNextEpisodesRequest(
-            currentEpisode.getSeasonId(),
-            0
+            currentEpisode.getSeasonId()
         );
 
         ItemRowAdapter episodeAdapter = new ItemRowAdapter(requireContext(), episodesRequest, 100, false, new CardPresenter(true, 110), new MutableObjectAdapter<Row>());

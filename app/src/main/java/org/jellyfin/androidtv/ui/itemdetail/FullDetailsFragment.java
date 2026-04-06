@@ -110,7 +110,6 @@ import kotlinx.serialization.json.Json;
 import timber.log.Timber;
 
 public class FullDetailsFragment extends Fragment implements RecordingIndicatorView, View.OnKeyListener {
-
     private int BUTTON_SIZE;
 
     DetailButton mResumeButton;
@@ -721,10 +720,17 @@ public class FullDetailsFragment extends Fragment implements RecordingIndicatorV
                 break;
 
             case EPISODE:
-                if (mBaseItem.getSeasonId() != null && mBaseItem.getIndexNumber() != null) {
-                    // query index is zero-based but episode no is not
-                    ItemRowAdapter nextAdapter = new ItemRowAdapter(requireContext(), BrowsingUtils.createNextEpisodesRequest(mBaseItem.getSeasonId(), mBaseItem.getIndexNumber()), 0, false, true, new CardPresenter(true, 120), adapter);
-                    addItemRow(adapter, nextAdapter, 5, getString(R.string.lbl_next_episode));
+                if (mBaseItem.getSeasonId() != null && mBaseItem.getId() != null) {
+                    ItemRowAdapter nextAdapter = new ItemRowAdapter(requireContext(), BrowsingUtils.createNextEpisodesRequest(mBaseItem.getSeasonId()), 0, false, true, new CardPresenter(true, 120), adapter);
+                    nextAdapter.setInitialSelectionItemId(mBaseItem.getId());
+                    if (mBaseItem.getIndexNumber() != null) {
+                        nextAdapter.setInitialSelectionIndex(Math.max(0, mBaseItem.getIndexNumber() - 1));
+                    }
+                    String episodesHeader = getString(R.string.lbl_episodes);
+                    if (mBaseItem.getParentIndexNumber() != null && mBaseItem.getParentIndexNumber() != 0) {
+                        episodesHeader = getString(R.string.lbl_season_number, mBaseItem.getParentIndexNumber()) + " " + episodesHeader;
+                    }
+                    addItemRow(adapter, nextAdapter, 5, episodesHeader);
                 }
 
                 //Guest stars

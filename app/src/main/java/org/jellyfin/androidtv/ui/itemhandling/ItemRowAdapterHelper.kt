@@ -25,6 +25,7 @@ import org.jellyfin.sdk.api.client.extensions.tvShowsApi
 import org.jellyfin.sdk.api.client.extensions.userLibraryApi
 import org.jellyfin.sdk.api.client.extensions.userViewsApi
 import org.jellyfin.sdk.api.client.extensions.videosApi
+import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.ItemFilter
 import org.jellyfin.sdk.model.api.ItemSortBy
 import org.jellyfin.sdk.model.api.SeriesTimerInfoDto
@@ -42,6 +43,16 @@ import org.jellyfin.sdk.model.api.request.GetSimilarItemsRequest
 import org.jellyfin.sdk.model.api.request.GetUpcomingEpisodesRequest
 import timber.log.Timber
 import kotlin.math.min
+import java.util.UUID
+
+internal fun findInitialSelectionIndexByItemId(
+	items: List<BaseItemDto>,
+	selectedItemId: UUID?,
+): Int {
+	if (selectedItemId == null) return -1
+	val index = items.indexOfFirst { it.id == selectedItemId }
+	return index
+}
 
 fun <T : Any> ItemRowAdapter.setItems(
 	items: Collection<T>,
@@ -588,14 +599,25 @@ fun ItemRowAdapter.retrieveItems(
 	}
 	ProcessLifecycleOwner.get().lifecycleScope.launch {
 		runCatching {
-			val response = withContext(Dispatchers.IO) {
-				api.itemsApi.getItems(
-					query.copy(
-						startIndex = startIndex,
-						limit = batchSize,
-					)
-				).content
+			val request = when {
+				batchSize > 0 -> query.copy(
+					startIndex = startIndex,
+					limit = batchSize,
+				)
+				startIndex > 0 -> query.copy(startIndex = startIndex)
+				else -> query
 			}
+
+			val response = withContext(Dispatchers.IO) {
+				api.itemsApi.getItems(request).content
+			}
+
+			setInitialSelectionIndex(
+				findInitialSelectionIndexByItemId(
+					items = response.items,
+					selectedItemId = initialSelectionItemId,
+				)
+			)
 
 			totalItems = response.totalRecordCount
 			setItems(
