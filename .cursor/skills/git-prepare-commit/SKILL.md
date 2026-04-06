@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Git Prepare Commit
 
 ## Purpose
-Prepare a branch and create one commit in this repository for the current local changes.
+Prepare a branch, create one commit, and push to remote for the current local changes.
 
 ## Required Inputs
 - commit intent (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`) when known
@@ -22,10 +22,12 @@ Prepare a branch and create one commit in this repository for the current local 
 5. Ask for explicit confirmation before staging and committing.
 6. Stage only intended files.
 7. Create one commit with concise imperative subject aligned to repository style.
-8. Return:
+8. Push the current branch to its remote after confirmation.
+9. Return:
    - branch name
    - commit SHA
    - final commit message
+   - push result
    - remaining working tree status
 
 ## Commit Message Style
@@ -36,5 +38,4 @@ Prepare a branch and create one commit in this repository for the current local 
 ## Hard Rules
 - Never commit on `main`.
 - Never include likely secret files.
-- Never push in this workflow.
 - If there are ambiguous staged-file decisions, stop and ask.
