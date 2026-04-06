@@ -44,9 +44,10 @@ All skills in this directory must format confirmation prompts as plain multiline
 - Output: PR URL and final published metadata.
 
 ### `/post-pr-sync`
-- Inputs: base branch, merged branch, delete-local-branch decision, optional next branch name.
-- Confirmation gates: branch cleanup and deletion confirmation.
+- Inputs: merged branch name when it is not the current branch.
+- Confirmation gates: dry-run script invocation confirmation.
 - Output: synced base status, cleanup actions, active branch, post-sync status.
+- Execution: runs `./scripts/post-pr-sync.sh <merged_branch>`.
 
 ## Scope Mapping
 - Existing `.cursor/commands` files are Android emulator and runtime helpers:
