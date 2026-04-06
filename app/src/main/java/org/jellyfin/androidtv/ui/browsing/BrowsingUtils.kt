@@ -204,12 +204,10 @@ object BrowsingUtils {
 	)
 
 	@JvmStatic
-	fun createNextEpisodesRequest(seasonId: UUID, indexNumber: Int) = GetItemsRequest(
+	fun createNextEpisodesRequest(seasonId: UUID) = GetItemsRequest(
 		fields = ItemRepository.itemFields,
 		parentId = seasonId,
 		includeItemTypes = setOf(BaseItemKind.EPISODE),
-		startIndex = indexNumber,
-		limit = 20,
 	)
 
 	@JvmStatic

@@ -52,11 +52,16 @@ import org.koin.java.KoinJavaComponent;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import kotlin.Lazy;
 import timber.log.Timber;
 
 public class ItemRowAdapter extends MutableObjectAdapter<Object> {
+    public interface SelectionIndexListener {
+        void onSelectionIndexReady(int index);
+    }
+
     private GetItemsRequest mQuery;
     private GetNextUpRequest mNextUpQuery;
     private GetSeasonsRequest mSeasonQuery;
@@ -105,6 +110,9 @@ public class ItemRowAdapter extends MutableObjectAdapter<Object> {
     private boolean preferParentThumb = false;
     private String mGenreFilter;
     private boolean staticHeight = false;
+    private int initialSelectionIndex = -1;
+    private UUID initialSelectionItemId = null;
+    private SelectionIndexListener selectionIndexListener = null;
 
     private final Lazy<org.jellyfin.sdk.api.client.ApiClient> api = inject(org.jellyfin.sdk.api.client.ApiClient.class);
     private final Lazy<UserViewsRepository> userViewsRepository = inject(UserViewsRepository.class);
@@ -669,6 +677,40 @@ public class ItemRowAdapter extends MutableObjectAdapter<Object> {
 
             updateVisibleItemLoading();
         }
+    }
+
+    public void setInitialSelectionIndex(int initialSelectionIndex) {
+        this.initialSelectionIndex = Math.max(initialSelectionIndex, -1);
+
+        if (this.initialSelectionIndex >= 0 && selectionIndexListener != null) {
+            selectionIndexListener.onSelectionIndexReady(this.initialSelectionIndex);
+        }
+    }
+
+    public int peekInitialSelectionIndex() {
+        return initialSelectionIndex;
+    }
+
+    public void markInitialSelectionApplied() {
+        initialSelectionIndex = -1;
+    }
+
+    public int consumeInitialSelectionIndex() {
+        int selectedIndex = initialSelectionIndex;
+        initialSelectionIndex = -1;
+        return selectedIndex;
+    }
+
+    public void setInitialSelectionItemId(@Nullable UUID itemId) {
+        this.initialSelectionItemId = itemId;
+    }
+
+    public @Nullable UUID getInitialSelectionItemId() {
+        return initialSelectionItemId;
+    }
+
+    public void setSelectionIndexListener(@Nullable SelectionIndexListener listener) {
+        this.selectionIndexListener = listener;
     }
 
     private void updateVisibleItemLoading() {
