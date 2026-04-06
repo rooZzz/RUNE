@@ -1,6 +1,8 @@
-# Rebuild and restart app on open emulator
+# Command: rebuild-restart-app
 
-From the repository root, run in a terminal:
+Scope: Android emulator runtime workflow only.
+
+From the repository root:
 
 ```bash
 ./scripts/rebuild-restart-on-emulator.sh
@@ -11,7 +13,7 @@ This command:
 - force-stops the app
 - starts `StartupActivity` again on the connected emulator/device
 
-If multiple devices are connected, set `ANDROID_SERIAL`:
+If multiple devices are connected:
 
 ```bash
 ANDROID_SERIAL=<serial> ./scripts/rebuild-restart-on-emulator.sh
